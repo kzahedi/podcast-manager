@@ -119,6 +119,22 @@ The script uses `BatchMode=yes` (no password prompts). Make sure your SSH public
 ssh-copy-id -p 22 user@your-nas-host
 ```
 
+## Syncing played episodes from Apple Podcasts
+
+`sync-played.py` reads your local Apple Podcasts database, finds episodes you've already listened to, and deletes them from the NAS via the podcast manager API.
+
+```bash
+cp .env.sync.example .env.sync
+# Edit .env.sync with your podcast manager and feed URLs
+
+./sync-played.py          # dry-run: shows what would be deleted
+./sync-played.py --yes    # actually delete
+```
+
+Matching uses the enclosure URL from the RSS feed (exact match, then filename fallback to handle host/port differences). Episodes are only deleted if they are currently in the feed — historical episodes already cleaned up are ignored.
+
+No extra dependencies — stdlib only (`sqlite3`, `urllib`, `xml.etree`).
+
 ## Development
 
 ```bash
