@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Podcast Manager</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+       background: #111; color: #e0e0e0; min-height: 100vh; }
+
+.app-header {
+  background: #1a1a1a; border-bottom: 1px solid #2e2e2e;
+  padding: 1rem 1.5rem;
+}
+.app-title { font-size: 1.05em; font-weight: 600; color: #fff; }
+.app-subtitle { font-size: 0.78em; color: #666; margin-top: 3px; }
+
+.container { max-width: 820px; margin: 0 auto; padding: 1.25rem 1.5rem; }
+
+.stats-bar {
+  display: flex; gap: 2rem; margin-bottom: 1.25rem;
+  padding: 0.85rem 1.25rem; background: #1a1a1a;
+  border: 1px solid #2a2a2a; border-radius: 8px;
+}
+.stat-value { font-size: 1.3em; font-weight: 700; color: #fff; }
+.stat-label { font-size: 0.68em; color: #666; text-transform: uppercase;
+              letter-spacing: 0.06em; margin-top: 2px; }
+
+.empty-state {
+  text-align: center; padding: 4rem 1rem; color: #555; font-size: 0.9em;
+}
+
+.week-group { margin-bottom: 0.6rem; }
+
+.week-header {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #1e1e1e; border: 1px solid #2e2e2e; border-radius: 8px;
+  padding: 0.7rem 1rem; cursor: pointer; user-select: none;
+}
+.week-header:hover { background: #242424; }
+.week-header.open { border-radius: 8px 8px 0 0; border-bottom-color: transparent; }
+
+.week-left { display: flex; align-items: center; gap: 0.75rem; }
+.week-badge {
+  background: #1c1c35; color: #8888ee; border: 1px solid #2e2e5a;
+  border-radius: 5px; padding: 0.18em 0.65em; font-size: 0.78em;
+  font-weight: 700; font-family: monospace; letter-spacing: 0.04em;
+}
+.week-label { font-size: 0.88em; font-weight: 500; color: #ccc; }
+.week-meta { font-size: 0.72em; color: #555; margin-top: 2px; }
+
+.week-right { display: flex; align-items: center; gap: 0.75rem; }
+.chevron { color: #444; font-size: 0.8em; transition: transform 0.2s; display: inline-block; }
+.week-header.open .chevron { transform: rotate(90deg); }
+
+.btn-delete-week {
+  background: transparent; color: #f87171; border: 1px solid #3a1515;
+  border-radius: 5px; padding: 0.26em 0.7em; font-size: 0.75em; cursor: pointer;
+}
+.btn-delete-week:hover { background: #1f0808; }
+
+.episode-list {
+  display: none; background: #151515; border: 1px solid #2e2e2e;
+  border-top: none; border-radius: 0 0 8px 8px; overflow: hidden;
+}
+.episode-list.open { display: block; }
+
+.episode-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.55rem 1rem; border-bottom: 1px solid #1e1e1e; gap: 1rem;
+}
+.episode-row:last-child { border-bottom: none; }
+.episode-row:hover { background: #1a1a1a; }
+
+.ep-info { flex: 1; min-width: 0; }
+.ep-title { font-size: 0.85em; font-weight: 500; color: #ddd;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-detail { font-size: 0.7em; color: #555; margin-top: 2px; font-family: monospace; }
+
+.btn-delete-ep {
+  background: transparent; color: #f87171; border: 1px solid #3a1515;
+  border-radius: 5px; padding: 0.2em 0.55em; font-size: 0.73em;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+.btn-delete-ep:hover { background: #1f0808; }
+
+/* Confirm dialog */
+.overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+  align-items: center; justify-content: center; z-index: 100;
+}
+.overlay.show { display: flex; }
+.dialog {
+  background: #1e1e1e; border: 1px solid #333; border-radius: 10px;
+  padding: 1.5rem 2rem; max-width: 360px; width: 90%; text-align: center;
+}
+.dialog h3 { font-size: 0.95em; color: #fff; margin-bottom: 0.5em; }
+.dialog p { font-size: 0.8em; color: #888; line-height: 1.55; margin-bottom: 1.25em; }
+.dialog-btns { display: flex; gap: 0.75rem; justify-content: center; }
+.btn-cancel {
+  background: #2a2a2a; color: #aaa; border: 1px solid #333;
+  border-radius: 6px; padding: 0.42em 1.1em; font-size: 0.82em; cursor: pointer;
+}
+.btn-confirm-delete {
+  background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b;
+  border-radius: 6px; padding: 0.42em 1.1em; font-size: 0.82em;
+  cursor: pointer; font-weight: 600;
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 1.25rem; right: 1.25rem;
+  background: #14532d; color: #86efac; border: 1px solid #166534;
+  border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.8em;
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-title">Podcast Manager</div>
+  <div class="app-subtitle">
+    {{ total_weeks }} week{{ 's' if total_weeks != 1 else '' }} ·
+    {{ total_episodes }} episode{{ 's' if total_episodes != 1 else '' }} ·
+    {{ total_size_gb }} GB
+  </div>
+</div>
+
+<div class="container">
+  {% if not weeks %}
+    <div class="empty-state">No episodes synced yet.</div>
+  {% else %}
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value">{{ total_weeks }}</div>
+        <div class="stat-label">Weeks</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ total_episodes }}</div>
+        <div class="stat-label">Episodes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ total_size_gb }} GB</div>
+        <div class="stat-label">Storage</div>
+      </div>
+    </div>
+
+    {% for week in weeks %}
+    <div class="week-group" id="wg-{{ week.iso_week }}">
+      <div class="week-header {% if loop.first %}open{% endif %}"
+           onclick="toggleWeek(this)">
+        <div class="week-left">
+          <span class="week-badge">W{{ week.week_num }}</span>
+          <div>
+            <div class="week-label">{{ week.iso_week }}</div>
+            <div class="week-meta">
+              {{ week.episodes|length }} episode{{ 's' if week.episodes|length != 1 else '' }} ·
+              {{ (week.total_size / 1024 / 1024)|round(0)|int }} MB
+            </div>
+          </div>
+        </div>
+        <div class="week-right">
+          <button class="btn-delete-week"
+            onclick="event.stopPropagation(); confirmDelete(
+              'Delete all {{ week.episodes|length }} episodes from {{ week.iso_week }}?',
+              'This removes the audio files and updates the RSS feed. Apple Podcasts will reflect this on next refresh.',
+              () => deleteWeek('{{ week.iso_week }}')
+            )">🗑 Delete Week</button>
+          <span class="chevron">›</span>
+        </div>
+      </div>
+
+      <div class="episode-list {% if loop.first %}open{% endif %}">
+        {% for ep in week.episodes %}
+        <div class="episode-row" id="ep-{{ ep.filename | replace('.', '-') }}">
+          <div class="ep-info">
+            <div class="ep-title" title="{{ ep.title }}">{{ ep.title }}</div>
+            <div class="ep-detail">{{ ep.filename }} · {{ ep.file_size_mb }} MB</div>
+          </div>
+          <button class="btn-delete-ep"
+            onclick="confirmDelete(
+              'Delete this episode?',
+              '{{ ep.title }} will be removed from storage and the RSS feed.',
+              () => deleteEpisode('{{ ep.filename }}', '{{ ep.iso_week }}')
+            )">🗑 Delete</button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<!-- Confirm dialog -->
+<div class="overlay" id="overlay" onclick="cancelDelete()">
+  <div class="dialog" onclick="event.stopPropagation()">
+    <h3 id="dlg-title"></h3>
+    <p id="dlg-msg"></p>
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="cancelDelete()">Cancel</button>
+      <button class="btn-confirm-delete" id="dlg-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleWeek(header) {
+  const list = header.nextElementSibling;
+  header.classList.toggle('open');
+  list.classList.toggle('open');
+}
+
+let _pendingAction = null;
+
+function confirmDelete(title, msg, action) {
+  document.getElementById('dlg-title').textContent = title;
+  document.getElementById('dlg-msg').textContent = msg;
+  document.getElementById('overlay').classList.add('show');
+  _pendingAction = action;
+  document.getElementById('dlg-confirm').onclick = () => { cancelDelete(); action(); };
+}
+
+function cancelDelete() {
+  document.getElementById('overlay').classList.remove('show');
+  _pendingAction = null;
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = (isError ? '✗ ' : '✓ ') + msg;
+  t.style.background = isError ? '#450a0a' : '#14532d';
+  t.style.color = isError ? '#fca5a5' : '#86efac';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function deleteEpisode(filename, isoWeek) {
+  const row = document.getElementById('ep-' + filename.replace(/\./g, '-'));
+  const r = await fetch('/episode/' + filename, { method: 'DELETE' });
+  const data = await r.json();
+  if (data.ok) {
+    row && row.remove();
+    showToast('Deleted — RSS feed updated');
+    updateWeekCount(isoWeek);
+  } else {
+    showToast(data.message || 'Delete failed', true);
+  }
+}
+
+async function deleteWeek(isoWeek) {
+  const wg = document.getElementById('wg-' + isoWeek);
+  const r = await fetch('/week/' + isoWeek, { method: 'DELETE' });
+  const data = await r.json();
+  if (data.ok) {
+    wg && wg.remove();
+    showToast(data.message + ' — RSS feed updated');
+  } else {
+    showToast(data.message || 'Delete failed', true);
+  }
+}
+
+function updateWeekCount(isoWeek) {
+  const wg = document.getElementById('wg-' + isoWeek);
+  if (!wg) return;
+  const remaining = wg.querySelectorAll('.episode-row').length;
+  if (remaining === 0) { wg.remove(); return; }
+  const meta = wg.querySelector('.week-meta');
+  if (meta) meta.textContent = remaining + ' episode' + (remaining !== 1 ? 's' : '');
+}
+</script>
+</body>
+</html>
