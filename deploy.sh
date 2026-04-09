@@ -86,11 +86,11 @@ echo "=== Loading image and restarting service on remote host ==="
 ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" "
     set -e
     cd '${DEPLOY_PATH}'
-    docker load -i '${IMAGE_NAME}.tar'
+    sudo -n /usr/local/bin/docker load -i '${IMAGE_NAME}.tar'
     rm -f '${IMAGE_NAME}.tar'
-    docker compose up -d --no-build '${COMPOSE_SERVICE}'
+    sudo -n /usr/local/bin/docker compose up -d --no-build '${COMPOSE_SERVICE}'
     echo 'Service restarted.'
-    docker compose ps '${COMPOSE_SERVICE}'
+    sudo -n /usr/local/bin/docker compose ps '${COMPOSE_SERVICE}'
 "
 
 # ── 5. Cleanup local tar ─────────────────────────────────────────────────────
