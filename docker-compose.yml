@@ -1,0 +1,14 @@
+services:
+  podcast-manager:
+    build: ./podcast-manager
+    ports:
+      - "8841:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      - DATA_DIR=/data
+    develop:
+      watch:
+        - action: sync
+          path: ./podcast-manager
+          target: /app
