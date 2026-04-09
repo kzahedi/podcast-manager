@@ -78,6 +78,47 @@ services:
 
 To run alongside an existing nginx podcast feed, add this service to your existing `docker-compose.yml` and point both at the same `data/` volume.
 
+## Deploying to a remote host (e.g. Synology NAS)
+
+The `deploy.sh` script builds the image locally, transfers it via SCP, and restarts the service — no Docker registry required.
+
+### 1. Configure
+
+```bash
+cp .env.deploy.example .env.deploy
+# Edit .env.deploy with your host, user, and remote path
+```
+
+`.env.deploy` is gitignored so credentials never reach the repository.
+
+### 2. Deploy
+
+```bash
+./deploy.sh
+```
+
+What it does:
+1. `docker build` the image locally
+2. `docker save` → exports a `.tar`
+3. `scp` the tar to the remote host
+4. SSH in: `docker load`, delete the tar, `docker compose up -d`
+
+### Build only (no remote step)
+
+```bash
+./deploy.sh --build-only
+```
+
+Exports `podcast-manager.tar` locally — useful for manual transfer or debugging.
+
+### SSH key setup
+
+The script uses `BatchMode=yes` (no password prompts). Make sure your SSH public key is in `~/.ssh/authorized_keys` on the remote host before running:
+
+```bash
+ssh-copy-id -p 22 user@your-nas-host
+```
+
 ## Development
 
 ```bash
