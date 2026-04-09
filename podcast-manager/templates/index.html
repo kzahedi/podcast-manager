@@ -234,9 +234,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         <span class="nav-stat-label">All-time</span>
         <span class="nav-stat-value">{{ all_time_count }}</span>
       </div>
-      {% if deleted_count > 0 %}
-      <div class="nav-stat-sub">+{{ deleted_count }} deleted · {{ deleted_size_gb }} GB freed</div>
-      {% endif %}
     </div>
 
     {% set ns = namespace(cur_year=None, cur_month=None) %}
@@ -281,16 +278,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         <div class="stat">
           <div class="stat-value">{{ all_time_count }}</div>
           <div class="stat-label">All-time</div>
-          {% if deleted_count > 0 %}
-          <div class="stat-sub">+{{ deleted_count }} deleted</div>
-          {% endif %}
         </div>
         <div class="stat">
           <div class="stat-value">{{ total_size_gb }} GB</div>
           <div class="stat-label">Storage</div>
-          {% if deleted_size_gb > 0 %}
-          <div class="stat-sub">{{ deleted_size_gb }} GB freed</div>
-          {% endif %}
         </div>
       </div>
 
