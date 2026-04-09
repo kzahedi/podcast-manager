@@ -90,6 +90,11 @@ def test_index_shows_all_time_stats(client, data_dir, monkeypatch):
     assert b"4" in body
 
 
+def test_index_shows_disk_free(client):
+    body = client.get("/").data
+    assert b"Disk free" in body
+
+
 def test_index_no_feed_xml_returns_empty(data_dir, monkeypatch):
     import app as app_module
     (data_dir / "feed.xml").unlink()

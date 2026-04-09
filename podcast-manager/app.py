@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import shutil
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
@@ -197,6 +198,13 @@ def index():
     deletion_stats = load_deletion_stats()
     total_episodes = sum(len(w["episodes"]) for w in sorted_weeks)
     total_size = sum(w["total_size"] for w in sorted_weeks)
+    try:
+        disk = shutil.disk_usage(DATA_DIR)
+        disk_free_gb = round(disk.free / (1024 ** 3), 1)
+        disk_total_gb = round(disk.total / (1024 ** 3), 1)
+    except OSError:
+        disk_free_gb = None
+        disk_total_gb = None
     return render_template(
         "index.html",
         weeks=sorted_weeks,
@@ -206,6 +214,8 @@ def index():
         deleted_count=deletion_stats["count"],
         deleted_size_gb=round(deletion_stats["total_size"] / (1024 ** 3), 2),
         all_time_count=total_episodes + deletion_stats["count"],
+        disk_free_gb=disk_free_gb,
+        disk_total_gb=disk_total_gb,
     )
 
 

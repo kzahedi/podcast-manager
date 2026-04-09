@@ -211,6 +211,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       {% if deleted_count > 0 %}
       <div class="nav-stat-sub">+{{ deleted_count }} deleted · {{ deleted_size_gb }} GB freed</div>
       {% endif %}
+      {% if disk_free_gb is not none %}
+      <div class="nav-stat-row" style="margin-top:6px">
+        <span class="nav-stat-label">Disk free</span>
+        <span class="nav-stat-value" style="font-size:0.78em">{{ disk_free_gb }} GB</span>
+      </div>
+      {% endif %}
     </div>
 
     {% set ns = namespace(cur_year=None, cur_month=None) %}
@@ -266,6 +272,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           <div class="stat-sub">{{ deleted_size_gb }} GB freed</div>
           {% endif %}
         </div>
+        {% if disk_free_gb is not none %}
+        <div class="stat">
+          <div class="stat-value">{{ disk_free_gb }} GB</div>
+          <div class="stat-label">Disk free</div>
+          <div class="stat-sub">of {{ disk_total_gb }} GB</div>
+        </div>
+        {% endif %}
       </div>
 
       {% for week in weeks %}
