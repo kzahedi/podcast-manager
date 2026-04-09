@@ -53,7 +53,8 @@ if [[ "$BUILD_ONLY" == "false" ]]; then
     done
 fi
 
-SSH_OPTS=(-p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
+SSH_OPTS=(-o BatchMode=yes -o StrictHostKeyChecking=accept-new)
+SCP_OPTS=(-O -P "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
 
 # ── 1. Build ────────────────────────────────────────────────────────────────
 echo "=== Building image: $IMAGE_NAME (linux/amd64) ==="
@@ -77,7 +78,7 @@ docker save "$IMAGE_NAME" -o "$TAR_FILE"
 # ── 3. Transfer ──────────────────────────────────────────────────────────────
 echo ""
 echo "=== Transferring to ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/ ==="
-scp "${SSH_OPTS[@]}" "$TAR_FILE" "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/${IMAGE_NAME}.tar"
+scp "${SCP_OPTS[@]}" "$TAR_FILE" "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/${IMAGE_NAME}.tar"
 
 # ── 4. Remote: load + restart ────────────────────────────────────────────────
 echo ""
