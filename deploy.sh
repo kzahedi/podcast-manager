@@ -56,8 +56,8 @@ fi
 SSH_OPTS=(-p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
 
 # ── 1. Build ────────────────────────────────────────────────────────────────
-echo "=== Building image: $IMAGE_NAME ==="
-docker build -t "$IMAGE_NAME" "$SCRIPT_DIR/podcast-manager"
+echo "=== Building image: $IMAGE_NAME (linux/amd64) ==="
+docker build --platform linux/amd64 -t "$IMAGE_NAME" "$SCRIPT_DIR/podcast-manager"
 
 if [[ "$BUILD_ONLY" == "true" ]]; then
     echo ""
