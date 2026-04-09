@@ -71,6 +71,25 @@ def test_index_shows_episode_titles(client):
     assert b"Episode W13" in body
 
 
+def test_index_shows_month_names_in_sidebar(client):
+    body = client.get("/").data
+    assert b"April" in body
+    assert b"March" in body
+
+
+def test_index_shows_all_time_stats(client, data_dir, monkeypatch):
+    import app as app_module
+    # Seed a deletion log entry
+    log = data_dir / "deletion-log.jsonl"
+    log.write_text(
+        json.dumps({"filename": "old.m4a", "title": "Old", "week": "2026-W10",
+                    "deleted_at": "2026-03-07T10:00:00+00:00", "file_size": 500000}) + "\n"
+    )
+    body = client.get("/").data
+    # all_time_count = 3 current + 1 deleted = 4
+    assert b"4" in body
+
+
 def test_index_no_feed_xml_returns_empty(data_dir, monkeypatch):
     import app as app_module
     (data_dir / "feed.xml").unlink()
@@ -101,6 +120,18 @@ def test_delete_episode_removes_item_from_feed(client, data_dir):
     assert "Episode W15-A" not in titles
     assert "Episode W15-B" in titles
     assert "Episode W13" in titles
+
+
+def test_delete_episode_writes_deletion_log(client, data_dir):
+    client.delete("/episode/ep-w15-a.m4a")
+    log = data_dir / "deletion-log.jsonl"
+    assert log.exists()
+    entry = json.loads(log.read_text().strip())
+    assert entry["filename"] == "ep-w15-a.m4a"
+    assert entry["title"] == "Episode W15-A"
+    assert entry["week"] == "2026-W15"
+    assert "deleted_at" in entry
+    assert entry["file_size"] == 4  # len(b"fake")
 
 
 def test_delete_episode_missing_file_still_updates_feed(client, data_dir):
@@ -144,6 +175,37 @@ def test_delete_week_removes_only_that_weeks_feed_items(client, data_dir):
     assert "Episode W15-A" not in titles
     assert "Episode W15-B" not in titles
     assert "Episode W13" in titles
+
+
+def test_delete_week_writes_deletion_log(client, data_dir):
+    client.delete("/week/2026-W15")
+    log = data_dir / "deletion-log.jsonl"
+    assert log.exists()
+    entries = [json.loads(l) for l in log.read_text().strip().splitlines()]
+    assert len(entries) == 2
+    filenames = {e["filename"] for e in entries}
+    assert filenames == {"ep-w15-a.m4a", "ep-w15-b.m4a"}
+    assert all(e["week"] == "2026-W15" for e in entries)
+
+
+# --- GET /download/<filename> ---
+
+def test_download_episode_returns_file(client, data_dir):
+    r = client.get("/download/ep-w15-a.m4a")
+    assert r.status_code == 200
+    assert r.data == b"fake"
+    assert "attachment" in r.headers.get("Content-Disposition", "")
+
+
+def test_download_episode_rejects_path_traversal(client):
+    r = client.get("/download/../feed.xml")
+    assert r.status_code in (400, 404)
+
+
+def test_download_episode_missing_returns_404(client, data_dir):
+    (data_dir / "episodes" / "ep-w15-a.m4a").unlink()
+    r = client.get("/download/ep-w15-a.m4a")
+    assert r.status_code == 404
 
 
 def test_delete_week_rejects_invalid_format(client):

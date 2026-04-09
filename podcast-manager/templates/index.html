@@ -7,59 +7,116 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-       background: #111; color: #e0e0e0; min-height: 100vh; }
+       background: #111; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
 
+/* ── Header ────────────────────────────────────────────────── */
 .app-header {
   background: #1a1a1a; border-bottom: 1px solid #2e2e2e;
-  padding: 1rem 1.5rem;
+  padding: 0.85rem 1.25rem; flex-shrink: 0;
 }
 .app-title { font-size: 1.05em; font-weight: 600; color: #fff; }
-.app-subtitle { font-size: 0.78em; color: #666; margin-top: 3px; }
+.app-subtitle { font-size: 0.75em; color: #555; margin-top: 2px; }
 
-.container { max-width: 820px; margin: 0 auto; padding: 1.25rem 1.5rem; }
+/* ── Layout ────────────────────────────────────────────────── */
+.layout { display: flex; flex: 1; overflow: hidden; }
 
+/* ── Sidebar ───────────────────────────────────────────────── */
+.sidebar {
+  width: 165px; flex-shrink: 0;
+  background: #141414; border-right: 1px solid #222;
+  overflow-y: auto; position: sticky; top: 0; height: calc(100vh - 49px);
+}
+
+.nav-stats {
+  padding: 0.75rem 0.85rem 0.6rem;
+  border-bottom: 1px solid #1e1e1e;
+}
+.nav-stat-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.nav-stat-label { font-size: 0.68em; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+.nav-stat-value { font-size: 0.9em; font-weight: 700; color: #fff; }
+.nav-stat-sub { font-size: 0.65em; color: #4ade80; }
+
+.nav-year {
+  font-size: 0.7em; font-weight: 700; color: #555;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  padding: 0.7rem 0.85rem 0.25rem;
+}
+
+.nav-month-header {
+  display: flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.7rem 0.2rem 0.85rem;
+  font-size: 0.78em; font-weight: 600; color: #888;
+  cursor: pointer; user-select: none;
+}
+.nav-month-header:hover { color: #bbb; }
+.nav-month-chevron { font-size: 0.7em; transition: transform 0.15s; display: inline-block; }
+.nav-month-header.open .nav-month-chevron { transform: rotate(90deg); }
+
+.nav-month-weeks { display: none; }
+.nav-month-header.open + .nav-month-weeks { display: block; }
+
+.nav-week {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.28rem 0.7rem 0.28rem 1.35rem;
+  font-size: 0.75em; color: #666; cursor: pointer; text-decoration: none;
+  border-left: 2px solid transparent; margin-left: 0.4rem;
+}
+.nav-week:hover { color: #ccc; background: #1a1a1a; }
+.nav-week.active { color: #9999ee; border-left-color: #6666cc; background: #1a1a2a; }
+.nav-week-badge {
+  background: #1c1c35; color: #7777cc; border: 1px solid #2a2a4a;
+  border-radius: 3px; padding: 0 4px; font-size: 0.85em; font-weight: 700;
+  font-family: monospace;
+}
+.nav-week-date { color: #444; font-size: 0.88em; }
+
+/* ── Main content ──────────────────────────────────────────── */
+.main { flex: 1; min-width: 0; overflow-y: auto; padding: 1.1rem 1.4rem; }
+
+/* Stats bar */
 .stats-bar {
-  display: flex; gap: 2rem; margin-bottom: 1.25rem;
-  padding: 0.85rem 1.25rem; background: #1a1a1a;
+  display: flex; gap: 1.5rem; margin-bottom: 1.1rem;
+  padding: 0.8rem 1.1rem; background: #1a1a1a;
   border: 1px solid #2a2a2a; border-radius: 8px;
 }
-.stat-value { font-size: 1.3em; font-weight: 700; color: #fff; }
-.stat-label { font-size: 0.68em; color: #666; text-transform: uppercase;
-              letter-spacing: 0.06em; margin-top: 2px; }
+.stat { min-width: 0; }
+.stat-value { font-size: 1.25em; font-weight: 700; color: #fff; }
+.stat-label { font-size: 0.65em; color: #555; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+.stat-sub { font-size: 0.65em; color: #4ade80; margin-top: 1px; }
 
-.empty-state {
-  text-align: center; padding: 4rem 1rem; color: #555; font-size: 0.9em;
-}
+.empty-state { text-align: center; padding: 4rem 1rem; color: #555; font-size: 0.9em; }
 
-.week-group { margin-bottom: 0.6rem; }
+/* Week groups */
+.week-group { margin-bottom: 0.55rem; scroll-margin-top: 1rem; }
 
 .week-header {
   display: flex; align-items: center; justify-content: space-between;
   background: #1e1e1e; border: 1px solid #2e2e2e; border-radius: 8px;
-  padding: 0.7rem 1rem; cursor: pointer; user-select: none;
+  padding: 0.65rem 0.9rem; cursor: pointer; user-select: none;
 }
 .week-header:hover { background: #242424; }
 .week-header.open { border-radius: 8px 8px 0 0; border-bottom-color: transparent; }
 
-.week-left { display: flex; align-items: center; gap: 0.75rem; }
+.week-left { display: flex; align-items: center; gap: 0.65rem; }
 .week-badge {
   background: #1c1c35; color: #8888ee; border: 1px solid #2e2e5a;
-  border-radius: 5px; padding: 0.18em 0.65em; font-size: 0.78em;
+  border-radius: 5px; padding: 0.18em 0.6em; font-size: 0.78em;
   font-weight: 700; font-family: monospace; letter-spacing: 0.04em;
 }
-.week-label { font-size: 0.88em; font-weight: 500; color: #ccc; }
-.week-meta { font-size: 0.72em; color: #555; margin-top: 2px; }
+.week-label { font-size: 0.87em; font-weight: 500; color: #ccc; }
+.week-meta { font-size: 0.7em; color: #555; margin-top: 2px; }
 
-.week-right { display: flex; align-items: center; gap: 0.75rem; }
+.week-right { display: flex; align-items: center; gap: 0.65rem; }
 .chevron { color: #444; font-size: 0.8em; transition: transform 0.2s; display: inline-block; }
 .week-header.open .chevron { transform: rotate(90deg); }
 
 .btn-delete-week {
   background: transparent; color: #f87171; border: 1px solid #3a1515;
-  border-radius: 5px; padding: 0.26em 0.7em; font-size: 0.75em; cursor: pointer;
+  border-radius: 5px; padding: 0.24em 0.65em; font-size: 0.73em; cursor: pointer;
 }
 .btn-delete-week:hover { background: #1f0808; }
 
+/* Episode list */
 .episode-list {
   display: none; background: #151515; border: 1px solid #2e2e2e;
   border-top: none; border-radius: 0 0 8px 8px; overflow: hidden;
@@ -68,20 +125,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
 .episode-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0.55rem 1rem; border-bottom: 1px solid #1e1e1e; gap: 1rem;
+  padding: 0.5rem 0.9rem; border-bottom: 1px solid #1e1e1e; gap: 0.75rem;
 }
 .episode-row:last-child { border-bottom: none; }
 .episode-row:hover { background: #1a1a1a; }
 
 .ep-info { flex: 1; min-width: 0; }
-.ep-title { font-size: 0.85em; font-weight: 500; color: #ddd;
+.ep-title { font-size: 0.84em; font-weight: 500; color: #ddd;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ep-detail { font-size: 0.7em; color: #555; margin-top: 2px; font-family: monospace; }
+.ep-detail { font-size: 0.69em; color: #555; margin-top: 2px; font-family: monospace; }
+
+.ep-actions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+
+.btn-download {
+  background: transparent; color: #60a5fa; border: 1px solid #1a2a4a;
+  border-radius: 5px; padding: 0.2em 0.55em; font-size: 0.72em;
+  cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block;
+}
+.btn-download:hover { background: #0a1525; }
 
 .btn-delete-ep {
   background: transparent; color: #f87171; border: 1px solid #3a1515;
-  border-radius: 5px; padding: 0.2em 0.55em; font-size: 0.73em;
-  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  border-radius: 5px; padding: 0.2em 0.5em; font-size: 0.72em;
+  cursor: pointer; white-space: nowrap;
 }
 .btn-delete-ep:hover { background: #1f0808; }
 
@@ -93,27 +159,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .overlay.show { display: flex; }
 .dialog {
   background: #1e1e1e; border: 1px solid #333; border-radius: 10px;
-  padding: 1.5rem 2rem; max-width: 360px; width: 90%; text-align: center;
+  padding: 1.4rem 1.8rem; max-width: 340px; width: 90%; text-align: center;
 }
-.dialog h3 { font-size: 0.95em; color: #fff; margin-bottom: 0.5em; }
-.dialog p { font-size: 0.8em; color: #888; line-height: 1.55; margin-bottom: 1.25em; }
-.dialog-btns { display: flex; gap: 0.75rem; justify-content: center; }
+.dialog h3 { font-size: 0.93em; color: #fff; margin-bottom: 0.45em; }
+.dialog p { font-size: 0.78em; color: #888; line-height: 1.55; margin-bottom: 1.1em; }
+.dialog-btns { display: flex; gap: 0.65rem; justify-content: center; }
 .btn-cancel {
   background: #2a2a2a; color: #aaa; border: 1px solid #333;
-  border-radius: 6px; padding: 0.42em 1.1em; font-size: 0.82em; cursor: pointer;
+  border-radius: 6px; padding: 0.4em 1em; font-size: 0.8em; cursor: pointer;
 }
 .btn-confirm-delete {
   background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b;
-  border-radius: 6px; padding: 0.42em 1.1em; font-size: 0.82em;
+  border-radius: 6px; padding: 0.4em 1em; font-size: 0.8em;
   cursor: pointer; font-weight: 600;
 }
 
 /* Toast */
 .toast {
-  position: fixed; bottom: 1.25rem; right: 1.25rem;
+  position: fixed; bottom: 1.1rem; right: 1.1rem;
   background: #14532d; color: #86efac; border: 1px solid #166534;
-  border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.8em;
-  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  border-radius: 8px; padding: 0.55rem 0.9rem; font-size: 0.78em;
+  opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 200;
 }
 .toast.show { opacity: 1; }
 </style>
@@ -129,69 +195,126 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   </div>
 </div>
 
-<div class="container">
-  {% if not weeks %}
-    <div class="empty-state">No episodes synced yet.</div>
-  {% else %}
-    <div class="stats-bar">
-      <div class="stat">
-        <div class="stat-value">{{ total_weeks }}</div>
-        <div class="stat-label">Weeks</div>
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar">
+    <div class="nav-stats">
+      <div class="nav-stat-row">
+        <span class="nav-stat-label">Now</span>
+        <span class="nav-stat-value">{{ total_episodes }}</span>
       </div>
-      <div class="stat">
-        <div class="stat-value">{{ total_episodes }}</div>
-        <div class="stat-label">Episodes</div>
+      <div class="nav-stat-row">
+        <span class="nav-stat-label">All-time</span>
+        <span class="nav-stat-value">{{ all_time_count }}</span>
       </div>
-      <div class="stat">
-        <div class="stat-value">{{ total_size_gb }} GB</div>
-        <div class="stat-label">Storage</div>
-      </div>
+      {% if deleted_count > 0 %}
+      <div class="nav-stat-sub">+{{ deleted_count }} deleted · {{ deleted_size_gb }} GB freed</div>
+      {% endif %}
     </div>
 
+    {% set ns = namespace(cur_year=None, cur_month=None) %}
     {% for week in weeks %}
-    <div class="week-group" id="wg-{{ week.iso_week }}">
-      <div class="week-header {% if loop.first %}open{% endif %}"
-           onclick="toggleWeek(this)">
-        <div class="week-left">
-          <span class="week-badge">W{{ week.week_num }}</span>
-          <div>
-            <div class="week-label">{{ week.iso_week }}</div>
-            <div class="week-meta">
-              {{ week.episodes|length }} episode{{ 's' if week.episodes|length != 1 else '' }} ·
-              {{ (week.total_size / 1024 / 1024)|round(0)|int }} MB
+      {% if week.week_year != ns.cur_year %}
+        <div class="nav-year">{{ week.week_year }}</div>
+        {% set ns.cur_year = week.week_year %}
+        {% set ns.cur_month = None %}
+      {% endif %}
+      {% if week.month_key != ns.cur_month %}
+        <div class="nav-month-header open" onclick="toggleMonth(this)">
+          <span class="nav-month-chevron">›</span>
+          {{ week.month_name }}
+        </div>
+        <div class="nav-month-weeks">
+        {% set ns.cur_month = week.month_key %}
+      {% endif %}
+        <a class="nav-week" data-week="{{ week.iso_week }}" onclick="scrollToWeek('{{ week.iso_week }}')">
+          <span class="nav-week-badge">W{{ week.week_num }}</span>
+          <span class="nav-week-date">{{ week.start_date }}</span>
+        </a>
+      {% if loop.last or weeks[loop.index].month_key != week.month_key %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  <!-- ── Main ── -->
+  <main class="main">
+    {% if not weeks %}
+      <div class="empty-state">No episodes synced yet.</div>
+    {% else %}
+      <div class="stats-bar">
+        <div class="stat">
+          <div class="stat-value">{{ total_weeks }}</div>
+          <div class="stat-label">Weeks</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">{{ total_episodes }}</div>
+          <div class="stat-label">Now</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">{{ all_time_count }}</div>
+          <div class="stat-label">All-time</div>
+          {% if deleted_count > 0 %}
+          <div class="stat-sub">+{{ deleted_count }} deleted</div>
+          {% endif %}
+        </div>
+        <div class="stat">
+          <div class="stat-value">{{ total_size_gb }} GB</div>
+          <div class="stat-label">Storage</div>
+          {% if deleted_size_gb > 0 %}
+          <div class="stat-sub">{{ deleted_size_gb }} GB freed</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% for week in weeks %}
+      <div class="week-group" id="wg-{{ week.iso_week }}">
+        <div class="week-header {% if loop.first %}open{% endif %}" onclick="toggleWeek(this)">
+          <div class="week-left">
+            <span class="week-badge">W{{ week.week_num }}</span>
+            <div>
+              <div class="week-label">{{ week.iso_week }} &nbsp;<span style="font-weight:400;color:#555;font-size:0.9em">{{ week.start_date }}</span></div>
+              <div class="week-meta">
+                {{ week.episodes|length }} episode{{ 's' if week.episodes|length != 1 else '' }} ·
+                {{ (week.total_size / 1024 / 1024)|round(0)|int }} MB
+              </div>
             </div>
           </div>
-        </div>
-        <div class="week-right">
-          <button class="btn-delete-week"
-            onclick="event.stopPropagation(); confirmDelete(
-              'Delete all {{ week.episodes|length }} episodes from {{ week.iso_week }}?',
-              'This removes the audio files and updates the RSS feed. Apple Podcasts will reflect this on next refresh.',
-              () => deleteWeek('{{ week.iso_week }}')
-            )">🗑 Delete Week</button>
-          <span class="chevron">›</span>
-        </div>
-      </div>
-
-      <div class="episode-list {% if loop.first %}open{% endif %}">
-        {% for ep in week.episodes %}
-        <div class="episode-row" id="ep-{{ ep.filename | replace('.', '-') }}">
-          <div class="ep-info">
-            <div class="ep-title" title="{{ ep.title }}">{{ ep.title }}</div>
-            <div class="ep-detail">{{ ep.filename }} · {{ ep.file_size_mb }} MB</div>
+          <div class="week-right">
+            <button class="btn-delete-week"
+              onclick="event.stopPropagation(); confirmDelete(
+                'Delete all {{ week.episodes|length }} episodes from {{ week.iso_week }}?',
+                'This removes the audio files and updates the RSS feed. Apple Podcasts will reflect this on next refresh.',
+                () => deleteWeek('{{ week.iso_week }}')
+              )">🗑 Delete Week</button>
+            <span class="chevron">›</span>
           </div>
-          <button class="btn-delete-ep"
-            onclick="confirmDelete(
-              'Delete this episode?',
-              '{{ ep.title }} will be removed from storage and the RSS feed.',
-              () => deleteEpisode('{{ ep.filename }}', '{{ ep.iso_week }}')
-            )">🗑 Delete</button>
         </div>
-        {% endfor %}
+
+        <div class="episode-list {% if loop.first %}open{% endif %}">
+          {% for ep in week.episodes %}
+          <div class="episode-row" id="ep-{{ ep.filename | replace('.', '-') }}">
+            <div class="ep-info">
+              <div class="ep-title" title="{{ ep.title }}">{{ ep.title }}</div>
+              <div class="ep-detail">{{ ep.filename }} · {{ ep.file_size_mb }} MB</div>
+            </div>
+            <div class="ep-actions">
+              <a class="btn-download" href="/download/{{ ep.filename }}" download="{{ ep.filename }}">⬇ Download</a>
+              <button class="btn-delete-ep"
+                onclick="confirmDelete(
+                  'Delete this episode?',
+                  '{{ ep.title }} will be removed from storage and the RSS feed.',
+                  () => deleteEpisode('{{ ep.filename }}', '{{ ep.iso_week }}')
+                )">🗑 Delete</button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
       </div>
-    </div>
-    {% endfor %}
-  {% endif %}
+      {% endfor %}
+    {% endif %}
+  </main>
 </div>
 
 <!-- Confirm dialog -->
@@ -209,25 +332,63 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Week accordion ───────────────────────────────────────────
 function toggleWeek(header) {
   const list = header.nextElementSibling;
   header.classList.toggle('open');
   list.classList.toggle('open');
 }
 
-let _pendingAction = null;
+// ── Month accordion (sidebar) ────────────────────────────────
+function toggleMonth(header) {
+  header.classList.toggle('open');
+}
 
+// ── Sidebar scroll + active highlight ───────────────────────
+function scrollToWeek(isoWeek) {
+  const el = document.getElementById('wg-' + isoWeek);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Expand if collapsed
+  const header = el.querySelector('.week-header');
+  const list = el.querySelector('.episode-list');
+  if (header && !header.classList.contains('open')) {
+    header.classList.add('open');
+    list && list.classList.add('open');
+  }
+}
+
+function setActiveWeek(isoWeek) {
+  document.querySelectorAll('.nav-week').forEach(a => {
+    a.classList.toggle('active', a.dataset.week === isoWeek);
+  });
+}
+
+// Observe which week group is at the top of the viewport
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      setActiveWeek(entry.target.id.replace('wg-', ''));
+    }
+  });
+}, { threshold: 0.1, rootMargin: '-40px 0px -60% 0px' });
+
+document.querySelectorAll('.week-group').forEach(el => observer.observe(el));
+
+// Set first week active on load
+const firstWeek = document.querySelector('.week-group');
+if (firstWeek) setActiveWeek(firstWeek.id.replace('wg-', ''));
+
+// ── Confirm dialog ───────────────────────────────────────────
 function confirmDelete(title, msg, action) {
   document.getElementById('dlg-title').textContent = title;
   document.getElementById('dlg-msg').textContent = msg;
   document.getElementById('overlay').classList.add('show');
-  _pendingAction = action;
   document.getElementById('dlg-confirm').onclick = () => { cancelDelete(); action(); };
 }
 
 function cancelDelete() {
   document.getElementById('overlay').classList.remove('show');
-  _pendingAction = null;
 }
 
 function showToast(msg, isError) {
@@ -239,9 +400,10 @@ function showToast(msg, isError) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ── Delete actions ───────────────────────────────────────────
 async function deleteEpisode(filename, isoWeek) {
   const row = document.getElementById('ep-' + filename.replace(/\./g, '-'));
-  const r = await fetch('/episode/' + filename, { method: 'DELETE' });
+  const r = await fetch('/episode/' + encodeURIComponent(filename), { method: 'DELETE' });
   const data = await r.json();
   if (data.ok) {
     row && row.remove();
@@ -254,11 +416,14 @@ async function deleteEpisode(filename, isoWeek) {
 
 async function deleteWeek(isoWeek) {
   const wg = document.getElementById('wg-' + isoWeek);
-  const r = await fetch('/week/' + isoWeek, { method: 'DELETE' });
+  const r = await fetch('/week/' + encodeURIComponent(isoWeek), { method: 'DELETE' });
   const data = await r.json();
   if (data.ok) {
     wg && wg.remove();
     showToast(data.message + ' — RSS feed updated');
+    // Remove sidebar entry
+    const navLink = document.querySelector(`.nav-week[data-week="${isoWeek}"]`);
+    navLink && navLink.remove();
   } else {
     showToast(data.message || 'Delete failed', true);
   }
@@ -268,7 +433,12 @@ function updateWeekCount(isoWeek) {
   const wg = document.getElementById('wg-' + isoWeek);
   if (!wg) return;
   const remaining = wg.querySelectorAll('.episode-row').length;
-  if (remaining === 0) { wg.remove(); return; }
+  if (remaining === 0) {
+    wg.remove();
+    const navLink = document.querySelector(`.nav-week[data-week="${isoWeek}"]`);
+    navLink && navLink.remove();
+    return;
+  }
   const meta = wg.querySelector('.week-meta');
   if (meta) meta.textContent = remaining + ' episode' + (remaining !== 1 ? 's' : '');
 }
