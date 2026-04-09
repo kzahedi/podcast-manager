@@ -209,6 +209,51 @@ def test_download_episode_missing_returns_404(client, data_dir):
     assert r.status_code == 404
 
 
+# --- DELETE /episodes (batch) ---
+
+def test_batch_delete_returns_ok(client):
+    r = client.delete("/episodes", json={"filenames": ["ep-w15-a.m4a", "ep-w15-b.m4a"]})
+    assert r.status_code == 200
+    assert json.loads(r.data)["ok"] is True
+
+
+def test_batch_delete_removes_files(client, data_dir):
+    client.delete("/episodes", json={"filenames": ["ep-w15-a.m4a", "ep-w15-b.m4a"]})
+    assert not (data_dir / "episodes" / "ep-w15-a.m4a").exists()
+    assert not (data_dir / "episodes" / "ep-w15-b.m4a").exists()
+    assert (data_dir / "episodes" / "ep-w13.m4a").exists()
+
+
+def test_batch_delete_updates_feed(client, data_dir):
+    client.delete("/episodes", json={"filenames": ["ep-w15-a.m4a"]})
+    titles = [i.findtext("title") for i in ET.parse(data_dir / "feed.xml").findall(".//item")]
+    assert "Episode W15-A" not in titles
+    assert "Episode W15-B" in titles
+
+
+def test_batch_delete_writes_deletion_log(client, data_dir):
+    client.delete("/episodes", json={"filenames": ["ep-w15-a.m4a", "ep-w13.m4a"]})
+    log = data_dir / "deletion-log.jsonl"
+    entries = [json.loads(l) for l in log.read_text().strip().splitlines()]
+    assert len(entries) == 2
+    assert {e["filename"] for e in entries} == {"ep-w15-a.m4a", "ep-w13.m4a"}
+
+
+def test_batch_delete_rejects_path_traversal(client):
+    r = client.delete("/episodes", json={"filenames": ["../feed.xml"]})
+    assert r.status_code == 400
+
+
+def test_batch_delete_rejects_empty_list(client):
+    r = client.delete("/episodes", json={"filenames": []})
+    assert r.status_code == 400
+
+
+def test_batch_delete_rejects_missing_body(client):
+    r = client.delete("/episodes")
+    assert r.status_code == 400
+
+
 def test_delete_week_rejects_invalid_format(client):
     r = client.delete("/week/not-a-week")
     assert r.status_code == 400

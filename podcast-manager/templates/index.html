@@ -135,6 +135,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ep-detail { font-size: 0.69em; color: #555; margin-top: 2px; font-family: monospace; }
 
+/* Checkboxes */
+.ep-check { width: 15px; height: 15px; accent-color: #6366f1; cursor: pointer; flex-shrink: 0; }
+.week-check { width: 13px; height: 13px; accent-color: #6366f1; cursor: pointer; flex-shrink: 0; }
+
+/* Floating action bar */
+.action-bar {
+  position: fixed; bottom: 1.1rem; left: 50%; transform: translateX(-50%);
+  background: #1e1e2e; border: 1px solid #3a3a6a; border-radius: 10px;
+  padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.75rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5); z-index: 150;
+  opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+.action-bar.show { opacity: 1; pointer-events: all; }
+.action-bar-label { font-size: 0.82em; color: #aaa; white-space: nowrap; }
+.btn-delete-selected {
+  background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b;
+  border-radius: 6px; padding: 0.35em 0.85em; font-size: 0.8em;
+  cursor: pointer; font-weight: 600; white-space: nowrap;
+}
+.btn-delete-selected:hover { background: #991b1b; }
+.btn-clear-selection {
+  background: transparent; color: #555; border: 1px solid #333;
+  border-radius: 6px; padding: 0.35em 0.7em; font-size: 0.8em; cursor: pointer;
+}
+.btn-clear-selection:hover { color: #aaa; border-color: #555; }
+
 .ep-actions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 
 .btn-download {
@@ -282,6 +308,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             </div>
           </div>
           <div class="week-right">
+            <input type="checkbox" class="week-check" title="Select all in week"
+              onclick="event.stopPropagation(); toggleWeekSelection(this, '{{ week.iso_week }}')">
             <button class="btn-delete-week"
               onclick="event.stopPropagation(); confirmDelete(
                 'Delete all {{ week.episodes|length }} episodes from {{ week.iso_week }}?',
@@ -295,6 +323,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         <div class="episode-list {% if loop.first %}open{% endif %}">
           {% for ep in week.episodes %}
           <div class="episode-row" id="ep-{{ ep.filename | replace('.', '-') }}">
+            <input type="checkbox" class="ep-check" data-filename="{{ ep.filename }}" data-week="{{ ep.iso_week }}"
+              onchange="updateSelection()">
             <div class="ep-info">
               <div class="ep-title" title="{{ ep.title }}">{{ ep.title }}</div>
               <div class="ep-detail">{{ ep.filename }} · {{ ep.file_size_mb }} MB</div>
@@ -315,6 +345,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       {% endfor %}
     {% endif %}
   </main>
+</div>
+
+<!-- Floating action bar -->
+<div class="action-bar" id="action-bar">
+  <span class="action-bar-label" id="action-bar-label">0 selected</span>
+  <button class="btn-clear-selection" onclick="clearSelection()">Clear</button>
+  <button class="btn-delete-selected" onclick="confirmDeleteSelected()">🗑 Delete selected</button>
 </div>
 
 <!-- Confirm dialog -->
@@ -398,6 +435,76 @@ function showToast(msg, isError) {
   t.style.color = isError ? '#fca5a5' : '#86efac';
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Selection ────────────────────────────────────────────────
+function getChecked() {
+  return [...document.querySelectorAll('.ep-check:checked')];
+}
+
+function updateSelection() {
+  const checked = getChecked();
+  const bar = document.getElementById('action-bar');
+  const label = document.getElementById('action-bar-label');
+  if (checked.length > 0) {
+    label.textContent = checked.length + ' episode' + (checked.length !== 1 ? 's' : '') + ' selected';
+    bar.classList.add('show');
+  } else {
+    bar.classList.remove('show');
+  }
+  // Sync week-level checkboxes
+  document.querySelectorAll('.week-group').forEach(wg => {
+    const weekCheck = wg.querySelector('.week-check');
+    const epChecks = [...wg.querySelectorAll('.ep-check')];
+    if (weekCheck && epChecks.length) {
+      weekCheck.checked = epChecks.every(c => c.checked);
+      weekCheck.indeterminate = !weekCheck.checked && epChecks.some(c => c.checked);
+    }
+  });
+}
+
+function toggleWeekSelection(weekCheckbox, isoWeek) {
+  const wg = document.getElementById('wg-' + isoWeek);
+  wg.querySelectorAll('.ep-check').forEach(c => { c.checked = weekCheckbox.checked; });
+  updateSelection();
+}
+
+function clearSelection() {
+  document.querySelectorAll('.ep-check').forEach(c => { c.checked = false; });
+  document.querySelectorAll('.week-check').forEach(c => { c.checked = false; c.indeterminate = false; });
+  document.getElementById('action-bar').classList.remove('show');
+}
+
+function confirmDeleteSelected() {
+  const checked = getChecked();
+  if (!checked.length) return;
+  confirmDelete(
+    `Delete ${checked.length} episode${checked.length !== 1 ? 's' : ''}?`,
+    'Selected episodes will be removed from storage and the RSS feed.',
+    () => deleteSelected(checked)
+  );
+}
+
+async function deleteSelected(checked) {
+  const filenames = checked.map(c => c.dataset.filename);
+  const r = await fetch('/episodes', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filenames }),
+  });
+  const data = await r.json();
+  if (data.ok) {
+    checked.forEach(c => {
+      const row = c.closest('.episode-row');
+      const isoWeek = c.dataset.week;
+      row && row.remove();
+      updateWeekCount(isoWeek);
+    });
+    clearSelection();
+    showToast(data.message + ' — RSS feed updated');
+  } else {
+    showToast(data.message || 'Delete failed', true);
+  }
 }
 
 // ── Delete actions ───────────────────────────────────────────

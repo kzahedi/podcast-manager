@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, abort, send_from_directory
+from flask import Flask, jsonify, render_template, abort, send_from_directory, request
 
 app = Flask(__name__)
 
@@ -250,6 +250,31 @@ def delete_week(iso_week: str):
     _append_deletion_log(episodes)
 
     return jsonify({"ok": True, "message": f"Deleted {len(filenames)} episodes from {iso_week}"})
+
+
+@app.route("/episodes", methods=["DELETE"])
+def delete_episodes():
+    data = request.get_json(silent=True) or {}
+    filenames = data.get("filenames", [])
+    if not filenames or not isinstance(filenames, list):
+        abort(400)
+    for filename in filenames:
+        if not isinstance(filename, str) or "/" in filename or ".." in filename:
+            abort(400)
+
+    weeks_map = parse_feed()
+    all_episodes = [ep for w in weeks_map.values() for ep in w["episodes"]]
+    episodes_to_log = [ep for ep in all_episodes if ep["filename"] in set(filenames)]
+
+    for filename in filenames:
+        f = EPISODES_DIR / filename
+        if f.exists():
+            f.unlink()
+    _update_feed_xml(set(filenames))
+    if episodes_to_log:
+        _append_deletion_log(episodes_to_log)
+
+    return jsonify({"ok": True, "message": f"Deleted {len(filenames)} episodes"})
 
 
 @app.route("/download/<filename>")
